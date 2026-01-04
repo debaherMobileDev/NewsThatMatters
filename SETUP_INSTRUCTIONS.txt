@@ -1,0 +1,167 @@
+==========================================
+NEWS THAT MATTERS - SETUP INSTRUCTIONS
+==========================================
+
+OVERVIEW:
+---------
+News That Matters is a complete news aggregation app with personalized feeds,
+offline reading, bookmarks, and daily digest notifications.
+
+PROJECT STRUCTURE:
+------------------
+✓ Models/
+  - Article.swift (Core Data entity and display models)
+  - UserSettings.swift (User preferences with @AppStorage)
+  - NewsDataModel.xcdatamodeld (Core Data schema)
+
+✓ Services/
+  - NetworkService.swift (NewsAPI integration)
+  - PersistenceService.swift (Core Data operations)
+
+✓ ViewModels/
+  - NewsFeedViewModel.swift (Manages article feed and search)
+  - SettingsViewModel.swift (Manages user settings and notifications)
+
+✓ Views/
+  - HomeView.swift (Main news feed with category filters)
+  - ArticleDetailView.swift (Detailed article view)
+  - ArticleCardView.swift (Reusable article card component)
+  - BookmarksView.swift (Saved articles)
+  - SettingsView.swift (App settings and preferences)
+  - OnboardingView.swift (4-page onboarding flow)
+  - ContentView.swift (Main tab navigation)
+
+✓ Helpers/
+  - ColorExtensions.swift (Custom color palette)
+  - UtilityFunctions.swift (Date formatting, haptics, caching)
+
+QUICK START (NO SETUP REQUIRED):
+---------------------------------
+The app now includes MOCK DATA for immediate testing!
+You can run the app right away without an API key.
+
+STEPS:
+1. Open the project in Xcode
+2. Select a simulator (iPhone 14 or later recommended)
+3. Press Cmd+R to build and run
+4. The app will use sample news articles for testing
+
+⚠️ NOTE: Mock data shows 6 sample articles. To get real news:
+
+OPTIONAL - ADD REAL NEWS API:
+-----------------------------
+
+1. GET A FREE NEWS API KEY:
+   - Visit: https://newsapi.org/register
+   - Sign up for a free account (Developer plan)
+   - Copy your API key
+
+2. ADD API KEY TO THE APP:
+   - Open: News That Matters/Services/NetworkService.swift
+   - Find line 16: private let apiKey = "YOUR_API_KEY_HERE"
+   - Replace "YOUR_API_KEY_HERE" with your actual API key
+   - Example: private let apiKey = "abc123def456..."
+   - Rebuild and run
+
+3. VERIFICATION:
+   - Check Xcode console
+   - If you see "⚠️ Using mock data" - API key not configured
+   - If no warning appears - real news API is working!
+
+FEATURES IMPLEMENTED:
+---------------------
+
+✓ Custom News Feed
+  - Personalized by selected topics
+  - Category filtering (General, Business, Tech, Science, Health, Sports, Entertainment)
+  - Pull-to-refresh functionality
+  - Real-time search with debouncing
+
+✓ Offline Reading Mode
+  - Articles saved to Core Data
+  - Accessible without internet connection
+  - Automatic cleanup of old articles (30 days)
+
+✓ Engaging Onboarding Flow
+  - Welcome screen
+  - Topic selection with visual cards
+  - Feature overview
+
+✓ Beautiful UI/UX
+  - Custom color scheme:
+    * Backgrounds: #ae2d27, #dfb492, #ffc934
+    * Buttons/Elements: #1ed55f, #ffff03, #eb262f
+  - SF Symbols icons
+  - Smooth animations
+  - Haptic feedback
+  - Image caching
+
+✓ Bottom Tab Navigation
+  - Home (news feed)
+  - Search (topic search)
+  - Bookmarks (saved articles)
+  - Settings (preferences)
+
+✓ Complete Settings
+  - Topic selection
+  - Language preferences (EN, ES, FR, DE)
+  - Cache management
+  - About section
+
+NEWSAPI.ORG LIMITATIONS (Free Plan):
+-------------------------------------
+- 100 requests per day
+- Articles up to 1 month old
+- HTTPS only
+- No commercial use
+
+The app handles these limits gracefully with local caching and offline support.
+
+COLOR PALETTE:
+--------------
+Background Colors:
+- Primary: #ae2d27 (Burgundy Red)
+- Secondary: #dfb492 (Beige)
+- Tertiary: #ffc934 (Golden Yellow)
+
+Button/Element Colors:
+- Primary Button: #1ed55f (Green)
+- Secondary Button: #ffff03 (Yellow)
+- Accent: #eb262f (Red)
+
+TECHNICAL DETAILS:
+------------------
+- iOS Deployment Target: 15.6+
+- SwiftUI with @StateObject, @EnvironmentObject
+- Core Data for local storage
+- Combine for reactive programming
+- URLSession for networking
+- NSCache for image caching
+
+NEXT STEPS:
+-----------
+1. Add your NewsAPI key (see step 2 above)
+2. Run the app in Xcode simulator
+3. Complete the onboarding flow
+4. Select your favorite news topics
+5. Enjoy personalized news!
+
+NOTES:
+------
+- First launch shows onboarding
+- Articles auto-refresh every hour
+- Old articles (30+ days) are auto-deleted (except bookmarked)
+- All data stored locally using Core Data
+- No user account required
+- No permissions required (no push notifications, no location, etc.)
+- Privacy-focused (no data collection)
+
+SUPPORT:
+--------
+NewsAPI Documentation: https://newsapi.org/docs
+iOS Development: https://developer.apple.com/documentation/
+
+==========================================
+BUILD STATUS: ✓ SUCCESSFUL
+==========================================
+

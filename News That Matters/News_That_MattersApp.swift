@@ -9,9 +9,14 @@ import SwiftUI
 
 @main
 struct News_That_MattersApp: App {
+    let persistenceService = PersistenceService.shared
+    @StateObject private var userSettings = UserSettings()
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environment(\.managedObjectContext, persistenceService.viewContext)
+                .environmentObject(userSettings)
         }
     }
 }
